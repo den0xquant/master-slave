@@ -1,0 +1,1 @@
+## Setup master-slave replication in Postgres
