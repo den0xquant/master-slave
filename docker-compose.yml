@@ -1,6 +1,6 @@
 x-postgres-common:
   &x-postgres-common
-  image: postgres:17
+  image: bitnami/postgresql
   restart: always
   healthcheck:
     test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
@@ -17,43 +17,30 @@ services:
     env_file:
       - .env
     environment:
-      - PGDATA=/var/lib/postgresql/data/pgdata
-      - POSTGRES_USER=${POSTGRES_USER?Variable not set}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
-      - POSTGRES_DB=${POSTGRES_DB?Variable not set}
-      - POSTGRES_HOST_AUTH_METHOD="scram-sha-256"
-      - POSTGRES_INITDB_ARGS="--auth-host=scram-sha-256"
-    volumes:
-      - ./00_init.sql:/docker-entrypoint-initdb.d/00_init.sql
-      - ./01_hba.sh:/docker-entrypoint-initdb.d/01_hba.sh
-      - ./master_data:/var/lib/postgresql/data/pgdata
-    command: |
-      postgres
-      -c wal_level=replica
-      -c hot_standby=on
-      -c max_wal_senders=10
-      -c max_replication_slots=10
-      -c hot_standby_feedback=on
+      - POSTGRESQL_PGAUDIT_LOG=READ,WRITE
+      - POSTGRESQL_LOG_HOSTNAME=true
+      - POSTGRESQL_REPLICATION_MODE=master
+      - POSTGRESQL_REPLICATION_USER=replicator
+      - POSTGRESQL_REPLICATION_PASSWORD=replicator
+      - POSTGRESQL_USERNAME=${POSTGRES_USER?Variable not set}
+      - POSTGRESQL_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
+      - POSTGRESQL_DATABASE=${POSTGRES_DB?Variable not set}
+      - ALLOW_EMPTY_PASSWORD=yes
 
   slave:
     <<: *x-postgres-common
     ports:
       - "5434:5432"
     environment:
-      - PGUSER=replicator
-      - PGPASSWORD=replicator
-      - PGHOST=master
-    volumes:
-      - ./00_init.sql:/docker-entrypoint-initdb.d/00_init.sql
-      - ./slave_data:/var/lib/postgresql/data/pgdata
-    command: |
-      bash -c "
-      rm -rf /var/lib/postgresql/data/* && pg_basebackup --pgdata=/var/lib/postgresql/data/pgdata -R --slot=replication_slot; 
-      chown -R postgres:postgres /var/lib/postgresql/data && chmod 0700 /var/lib/postgresql/data; 
-      su postgres -c postgres; 
-      "
+      - POSTGRESQL_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
+      - POSTGRESQL_MASTER_HOST=master
+      - POSTGRESQL_PGAUDIT_LOG=READ
+      - POSTGRESQL_LOG_HOSTNAME=true
+      - POSTGRESQL_REPLICATION_MODE=slave
+      - POSTGRESQL_REPLICATION_USER=replicator
+      - POSTGRESQL_REPLICATION_PASSWORD=replicator
+      - POSTGRESQL_MASTER_PORT_NUMBER=5432
+      - ALLOW_EMPTY_PASSWORD=yes
     depends_on:
-      - master
-
-volumes:
-  master_data:
+      master:
+        condition: service_healthy
