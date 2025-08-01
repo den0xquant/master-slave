@@ -8,3 +8,8 @@ wheels/
 
 # Virtual environments
 .venv
+
+.env
+
+master_data
+slave_data
