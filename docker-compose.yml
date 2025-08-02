@@ -18,7 +18,6 @@ services:
       - .env
     environment:
       - POSTGRESQL_PGAUDIT_LOG=READ,WRITE
-      - POSTGRESQL_LOG_HOSTNAME=true
       - POSTGRESQL_REPLICATION_MODE=master
       - POSTGRESQL_REPLICATION_USER=replicator
       - POSTGRESQL_REPLICATION_PASSWORD=replicator
@@ -43,4 +42,27 @@ services:
       - ALLOW_EMPTY_PASSWORD=yes
     depends_on:
       master:
+        condition: service_healthy
+
+  pgpool:
+    image: bitnami/pgpool:latest
+    restart: always
+    ports:
+      - "5435:5432"
+    environment:
+      - PGPOOL_BACKEND_NODES=0:master:5432,1:slave:5432
+      - PGPOOL_SR_CHECK_USER=${POSTGRES_USER?Variable not set}
+      - PGPOOL_SR_CHECK_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
+      - PGPOOL_ENABLE_LDAP=no
+      - PGPOOL_POSTGRES_USERNAME=${POSTGRES_USER?Variable not set}
+      - PGPOOL_POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
+      - PGPOOL_ADMIN_USERNAME=admin
+      - PGPOOL_ADMIN_PASSWORD=qwertyjk
+    healthcheck:
+      test: ["CMD", "/opt/bitnami/scripts/pgpool/healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      slave:
         condition: service_healthy
