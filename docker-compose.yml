@@ -1,9 +1,8 @@
-x-postgres-common:
-  &x-postgres-common
+x-postgres-common: &x-postgres-common
   image: bitnami/postgresql
   restart: always
   healthcheck:
-    test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+    test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
     interval: 1m30s
     timeout: 30s
     retries: 5
@@ -17,12 +16,12 @@ services:
     env_file:
       - .env
     environment:
-      - POSTGRESQL_PGAUDIT_LOG=READ,WRITE
       - POSTGRESQL_REPLICATION_MODE=master
-      - POSTGRESQL_REPLICATION_USER=replicator
-      - POSTGRESQL_REPLICATION_PASSWORD=replicator
+      - POSTGRESQL_PGAUDIT_LOG=READ,WRITE
       - POSTGRESQL_USERNAME=${POSTGRES_USER?Variable not set}
       - POSTGRESQL_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
+      - POSTGRESQL_REPLICATION_USER=replicator
+      - POSTGRESQL_REPLICATION_PASSWORD=replicator
       - POSTGRESQL_DATABASE=${POSTGRES_DB?Variable not set}
       - ALLOW_EMPTY_PASSWORD=yes
 
@@ -31,11 +30,11 @@ services:
     ports:
       - "5434:5432"
     environment:
-      - POSTGRESQL_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
       - POSTGRESQL_MASTER_HOST=master
       - POSTGRESQL_PGAUDIT_LOG=READ
       - POSTGRESQL_LOG_HOSTNAME=true
       - POSTGRESQL_REPLICATION_MODE=slave
+      - POSTGRESQL_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
       - POSTGRESQL_REPLICATION_USER=replicator
       - POSTGRESQL_REPLICATION_PASSWORD=replicator
       - POSTGRESQL_MASTER_PORT_NUMBER=5432
@@ -59,7 +58,7 @@ services:
       - PGPOOL_ADMIN_USERNAME=admin
       - PGPOOL_ADMIN_PASSWORD=qwertyjk
     healthcheck:
-      test: ["CMD", "/opt/bitnami/scripts/pgpool/healthcheck.sh"]
+      test: [ "CMD", "/opt/bitnami/scripts/pgpool/healthcheck.sh" ]
       interval: 10s
       timeout: 5s
       retries: 5

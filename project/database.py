@@ -1,8 +1,4 @@
-import time
-from contextlib import contextmanager
-from loguru import logger
 from sqlmodel import SQLModel, create_engine, Session
-from psycopg2 import pool, OperationalError
 
 
 DB_USER = "dbuser"
@@ -11,9 +7,9 @@ DB_NAME = "db"
 DB_HOST = "localhost"
 DB_PORT = 5
 
-engine_master = create_engine(f"postgresql://{DB_USER}:{DB_PASS}@localhost:5433/{DB_NAME}", echo=True)
+engine_master = create_engine(f"postgresql://{DB_USER}:{DB_PASS}@localhost:5433/{DB_NAME}")
 engine_slave = create_engine(f"postgresql://{DB_USER}:{DB_PASS}@localhost:5434/{DB_NAME}", echo=True)
-engine_pgpool = create_engine(f"postgresql://{DB_USER}:{DB_PASS}@localhost:5435/{DB_NAME}", echo=True)
+engine_pgpool = create_engine(f"postgresql://{DB_USER}:{DB_PASS}@localhost:5435/{DB_NAME}")
 
 
 def get_master_session():
