@@ -1,15 +1,12 @@
+from typing import Annotated
+from fastapi import Depends
 from sqlmodel import SQLModel, create_engine, Session
+from project.config import settings
 
 
-DB_USER = "dbuser"
-DB_PASS = "pass"
-DB_NAME = "db"
-DB_HOST = "localhost"
-DB_PORT = 5
-
-engine_master = create_engine(f"postgresql://{DB_USER}:{DB_PASS}@localhost:5433/{DB_NAME}")
-engine_slave = create_engine(f"postgresql://{DB_USER}:{DB_PASS}@localhost:5434/{DB_NAME}", echo=True)
-engine_pgpool = create_engine(f"postgresql://{DB_USER}:{DB_PASS}@localhost:5435/{DB_NAME}")
+engine_master = create_engine(f"postgresql://{settings.DB_USER}:{settings.DB_PASS}@master:5432/{settings.DB_NAME}")
+engine_slave = create_engine(f"postgresql://{settings.DB_USER}:{settings.DB_PASS}@slave:5432/{settings.DB_NAME}", echo=True)
+engine_pgpool = create_engine(f"postgresql://{settings.DB_USER}:{settings.DB_PASS}@pgpool:5432/{settings.DB_NAME}")
 
 
 def get_master_session():
@@ -29,3 +26,7 @@ def get_pgpool_session():
 
 def init_all():
     SQLModel.metadata.create_all(engine_master)
+
+
+MasterSessionDependency = Annotated[Session, Depends(get_master_session)]
+SlaveSessionDependency = Annotated[Session, Depends(get_slave_session)]
